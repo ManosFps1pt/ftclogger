@@ -1,0 +1,22 @@
+plugins {
+    id 'com.android.library' version '8.10.0'
+}
+
+android {
+    namespace = 'io.github.manosfps1pt.ftclogger.consumer'
+    compileSdk = 30
+    defaultConfig { minSdk = 24 }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+    sourceSets.main.java.srcDir '../examples'
+}
+
+def libraryProperties = new Properties()
+file('../gradle.properties').withInputStream { libraryProperties.load(it) }
+
+dependencies {
+    // Deliberately resolve the published artifact, not a project dependency.
+    implementation "${libraryProperties.getProperty('group')}:ftclogger:${libraryProperties.getProperty('version')}"
+}

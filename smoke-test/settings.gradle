@@ -1,0 +1,25 @@
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        maven {
+            url = uri('../build/repository')
+            content { includeGroup 'io.github.manosfps1pt' }
+        }
+        google()
+        mavenCentral()
+        maven {
+            url = uri('https://repo.dairy.foundation/releases')
+            content { includeGroupByRegex 'dev\\.frozenmilk.*' }
+        }
+    }
+}
+
+rootProject.name = 'ftclogger-consumer-check'

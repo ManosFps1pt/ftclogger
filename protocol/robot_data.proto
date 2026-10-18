@@ -1,0 +1,469 @@
+syntax = "proto3";
+
+package ftc.robotdata.v2;
+
+option java_package = "io.github.manosfps1pt.ftclogger.protocol";
+option java_multiple_files = true;
+
+// Protocol version 2 replaces the debug JSON transport with protobuf. The
+// length prefix belongs to the TCP transport, not to this message.
+message Envelope {
+  uint32 protocol_version = 1;
+  bytes session_id = 2;            // 16-byte RFC 4122 UUID
+  bytes connection_id = 3;         // 16-byte RFC 4122 UUID
+  uint64 connection_sequence = 4;
+  uint64 robot_elapsed_ns = 5;
+
+  oneof body {
+    Hello hello = 10;
+    HelloAck hello_ack = 11;
+    Schema schema = 12;
+    SampleBatch sample_batch = 13;
+    Event event = 14;
+    Heartbeat heartbeat = 15;
+    Gap gap = 16;
+    SessionEnd session_end = 17;
+    GamepadSnapshot gamepad = 18;
+    ProtocolError error = 19;
+    DebugManifest debug_manifest = 20;
+    DebugSelectRequest debug_select_request = 21;
+    DebugSelectResponse debug_select_response = 22;
+    DebugToolReady debug_tool_ready = 23;
+    DebugToolState debug_tool_state = 24;
+    DebugParameterSetRequest debug_parameter_set_request = 25;
+    DebugParameterSetResponse debug_parameter_set_response = 26;
+    DebugCommandRequest debug_command_request = 27;
+    DebugCommandResponse debug_command_response = 28;
+    DebugSafetyState debug_safety_state = 29;
+    DebugRunStatus debug_run_status = 30;
+    DebugRunHeader debug_run_header = 31;
+    DebugRunChunk debug_run_chunk = 32;
+    DebugRunEnd debug_run_end = 33;
+    DebugRunAck debug_run_ack = 34;
+  }
+}
+
+message Hello {
+  string robot_id = 1;
+  string robot_name = 2;
+  string op_mode_name = 3;
+  uint64 started_at_robot_time_ns = 4;
+  uint32 queue_capacity = 5;
+  repeated string capabilities = 6;
+}
+
+message HelloAck {
+  bool accepted = 1;
+  uint64 server_time_ns = 2;
+  bool session_resumed = 3;
+  string reason = 4;
+  repeated string capabilities = 5;
+}
+
+message Schema {
+  uint32 revision = 1;
+  repeated Device devices = 2;
+  repeated Channel channels = 3;
+}
+
+message Device {
+  uint32 device_id = 1;
+  string key = 2;
+  string label = 3;
+  string subsystem = 4;
+  string device_type = 5;
+}
+
+message Channel {
+  uint32 channel_id = 1;
+  string key = 2;
+  string label = 3;
+  uint32 device_id = 4;            // zero means robot-wide
+  string quantity = 5;
+  string unit = 6;
+  ValueType value_type = 7;
+  ChannelRole role = 8;
+  double sample_hint_hz = 9;       // zero means unspecified
+  string description = 10;
+}
+
+enum ValueType {
+  VALUE_TYPE_UNSPECIFIED = 0;
+  FLOAT64 = 1;
+  INT64 = 2;
+  BOOLEAN = 3;
+  STRING = 4;
+  ENUM = 5;
+  VECTOR2 = 6;
+  VECTOR3 = 7;
+  POSE2D = 8;
+}
+
+enum ChannelRole {
+  CHANNEL_ROLE_UNSPECIFIED = 0;
+  MEASURED = 1;
+  TARGET = 2;
+  COMMAND = 3;
+  ERROR = 4;
+  STATUS = 5;
+  DIAGNOSTIC = 6;
+}
+
+message SampleBatch {
+  repeated Snapshot snapshots = 1;
+}
+
+message Snapshot {
+  uint64 sample_sequence = 1;
+  uint32 schema_revision = 2;
+  repeated ChannelValue values = 3;
+  // Control Hub-selected highlight. The laptop may apply a live local override
+  // when it creates its incident manifest, while retaining this raw value.
+  bool highlighted = 4;
+}
+
+message ChannelValue {
+  uint32 channel_id = 1;
+  oneof value {
+    double float64_value = 2;
+    sint64 int64_value = 3;
+    bool boolean_value = 4;
+    string string_value = 5;
+    Vector2 vector2_value = 6;
+    Vector3 vector3_value = 7;
+    Pose2d pose2d_value = 8;
+    bool unavailable = 9;          // must be true when present
+  }
+}
+
+message Vector2 { double x = 1; double y = 2; }
+message Vector3 { double x = 1; double y = 2; double z = 3; }
+message Pose2d { double x = 1; double y = 2; double heading_rad = 3; }
+
+message Event {
+  string name = 1;
+  Severity severity = 2;
+  repeated Attribute attributes = 3;
+}
+
+enum Severity {
+  SEVERITY_UNSPECIFIED = 0;
+  DEBUG = 1;
+  INFO = 2;
+  WARNING = 3;
+  EVENT_ERROR = 4;
+  CRITICAL = 5;
+}
+
+message Attribute {
+  string key = 1;
+  oneof value {
+    string string_value = 2;
+    double number_value = 3;
+    bool boolean_value = 4;
+    bool null_value = 5;           // must be true when present
+  }
+}
+
+message Heartbeat {
+  uint32 queued_frames = 1;
+  uint64 dropped_samples = 2;
+  uint64 last_sample_sequence = 3;
+}
+
+message Gap {
+  uint64 first_missing_sample_sequence = 1;
+  uint64 last_missing_sample_sequence = 2;
+  string reason = 3;
+}
+
+message SessionEnd { string reason = 1; uint64 last_sample_sequence = 2; }
+
+message GamepadSnapshot { Gamepad gamepad1 = 1; Gamepad gamepad2 = 2; }
+message Gamepad {
+  float left_stick_x = 1; float left_stick_y = 2;
+  float right_stick_x = 3; float right_stick_y = 4;
+  float left_trigger = 5; float right_trigger = 6;
+  bool a = 7; bool b = 8; bool x = 9; bool y = 10;
+  bool dpad_up = 11; bool dpad_down = 12; bool dpad_left = 13; bool dpad_right = 14;
+  bool left_bumper = 15; bool right_bumper = 16;
+  bool left_stick_button = 17; bool right_stick_button = 18;
+  bool back = 19; bool start = 20; bool guide = 21;
+}
+
+message ProtocolError { string code = 1; string message = 2; }
+
+// Debugger protocol messages. These use the same length-delimited TCP stream
+// as telemetry. The Driver Station/Robocol path remains authoritative for
+// OpMode lifecycle and emergency stop.
+message DebugManifest {
+  uint32 revision = 1;
+  string registry_id = 2;
+  string registry_label = 3;
+  repeated DebugNode nodes = 4;
+  string active_node_id = 5;
+}
+
+message DebugNode {
+  string id = 1;
+  string parent_id = 2;
+  string label = 3;
+  string description = 4;
+  DebugNodeKind kind = 5;
+  uint32 sort_order = 6;
+  DebugRiskClass risk_class = 7;
+  string op_mode_label = 8;
+  bool selectable = 9;
+  bool enabled = 10;
+  string disabled_reason = 11;
+  double max_output = 12;
+  uint32 max_active_duration_ms = 13;
+  repeated string parameter_ids = 14;
+  repeated string command_ids = 15;
+}
+
+enum DebugNodeKind {
+  DEBUG_NODE_KIND_UNSPECIFIED = 0;
+  DEBUG_FOLDER = 1;
+  DEBUG_TOOL = 2;
+}
+
+enum DebugRiskClass {
+  DEBUG_RISK_UNSPECIFIED = 0;
+  DEBUG_OBSERVE_ONLY = 1;
+  DEBUG_FREE_SPIN = 2;
+  DEBUG_DRIVETRAIN = 3;
+  DEBUG_MECHANISM = 4;
+}
+
+message DebugSelectRequest {
+  string request_id = 1;
+  uint32 manifest_revision = 2;
+  string node_id = 3;
+}
+
+message DebugSelectResponse {
+  string request_id = 1;
+  bool accepted = 2;
+  string node_id = 3;
+  DebugSessionState state = 4;
+  string rejection_code = 5;
+  string message = 6;
+}
+
+enum DebugSessionState {
+  DEBUG_SESSION_STATE_UNSPECIFIED = 0;
+  DEBUG_IDLE = 1;
+  DEBUG_SELECTED = 2;
+  DEBUG_READY = 3;
+  DEBUG_RUNNING = 4;
+  DEBUG_STOPPING = 5;
+  DEBUG_FAULTED = 6;
+}
+
+message DebugToolReady {
+  string node_id = 1;
+  string tool_instance_id = 2;
+  uint32 manifest_revision = 3;
+  repeated DebugParameter parameters = 4;
+  repeated DebugCommand commands = 5;
+  repeated string telemetry_channel_ids = 6;
+  DebugSessionState state = 7;
+  string message = 8;
+  repeated DebugBenchmarkDefinition benchmarks = 9;
+}
+
+// A benchmark is a robot procedure producing an immutable, run-scoped dataset.
+message DebugBenchmarkDefinition {
+  string id = 1;
+  uint32 version = 2;
+  string label = 3;
+  string description = 4;
+  repeated DebugCommandArgumentDefinition inputs = 5;
+  repeated Channel channels = 6;
+  repeated string analyzer_ids = 7;
+  bool reverse_allowed = 8;
+  double max_voltage = 9;
+}
+
+message DebugRunStatus {
+  string run_id = 1;
+  string state = 2;
+  string phase = 3;
+  uint32 repetition = 4;
+  sint32 direction = 5;
+  string message = 6;
+}
+
+message DebugRunHeader {
+  string run_id = 1;
+  string mechanism_id = 2;
+  string mechanism_label = 3;
+  string motor_name = 4;
+  DebugBenchmarkDefinition benchmark = 5;
+  repeated DebugCommandArgumentValue inputs = 6;
+  double ticks_per_revolution = 7; // Zero means calibration unavailable.
+  uint64 started_robot_ns = 8;
+  double max_power = 9;
+  double current_limit_amps = 10;
+}
+
+message DebugRunSample {
+  uint32 sequence = 1;
+  uint64 robot_time_ns = 2;
+  string phase = 3;
+  uint32 repetition = 4;
+  sint32 direction = 5;
+  uint32 operating_point = 6;
+  repeated ChannelValue values = 7;
+}
+
+message DebugRunChunk {
+  string run_id = 1;
+  uint32 chunk_index = 2;
+  repeated DebugRunSample samples = 3;
+}
+
+message DebugRunEnd {
+  string run_id = 1;
+  uint32 total_samples = 2;
+  uint32 total_chunks = 3;
+  string outcome = 4;
+  string message = 5;
+}
+
+message DebugRunAck {
+  string run_id = 1;
+  uint32 total_samples = 2;
+}
+
+message DebugParameter {
+  string id = 1;
+  string label = 2;
+  string description = 3;
+  ValueType value_type = 4;
+  double current_float64 = 5;
+  double min_float64 = 6;
+  double max_float64 = 7;
+  double step_float64 = 8;
+  string unit = 9;
+  bool writable = 10;
+  bool persistent = 11;
+  DebugParameterUpdatePolicy update_policy = 12;
+}
+
+enum DebugParameterUpdatePolicy {
+  DEBUG_PARAMETER_UPDATE_UNSPECIFIED = 0;
+  DEBUG_UPDATE_LOOP_BOUNDARY = 1;
+  DEBUG_UPDATE_WHEN_STOPPED = 2;
+}
+
+message DebugCommand {
+  string id = 1;
+  string label = 2;
+  string description = 3;
+  bool requires_human_acknowledgement = 4;
+  repeated DebugCommandArgumentDefinition arguments = 5;
+}
+
+message DebugCommandArgumentDefinition {
+  string id = 1;
+  string label = 2;
+  string description = 3;
+  ValueType value_type = 4;
+  bool required = 5;
+  string unit = 6;
+  double min_float64 = 7;
+  double max_float64 = 8;
+  repeated DebugEnumOption enum_options = 9;
+}
+
+message DebugEnumOption {
+  string id = 1;
+  string label = 2;
+}
+
+message DebugCommandArgumentValue {
+  string id = 1;
+  oneof value {
+    double float64_value = 2;
+    sint64 int64_value = 3;
+    bool boolean_value = 4;
+    string string_value = 5;
+    string enum_value = 6;
+  }
+}
+
+message DebugParameterSetRequest {
+  string request_id = 1;
+  string node_id = 2;
+  string tool_instance_id = 3;
+  string parameter_id = 4;
+  double float64_value = 5;
+  uint32 ttl_ms = 6;
+}
+
+message DebugParameterSetResponse {
+  string request_id = 1;
+  DebugParameterSetResult result = 2;
+  string parameter_id = 3;
+  double effective_float64 = 4;
+  string rejection_code = 5;
+  string message = 6;
+  uint64 applied_at_robot_time_ns = 7;
+}
+
+enum DebugParameterSetResult {
+  DEBUG_PARAMETER_RESULT_UNSPECIFIED = 0;
+  DEBUG_PARAMETER_ACCEPTED = 1;
+  DEBUG_PARAMETER_APPLIED = 2;
+  DEBUG_PARAMETER_REJECTED = 3;
+  DEBUG_PARAMETER_EXPIRED = 4;
+}
+
+message DebugCommandRequest {
+  string request_id = 1;
+  string node_id = 2;
+  string tool_instance_id = 3;
+  string command_id = 4;
+  uint32 ttl_ms = 5;
+  repeated DebugCommandArgumentValue arguments = 6;
+}
+
+message DebugCommandResponse {
+  string request_id = 1;
+  DebugCommandResult result = 2;
+  string command_id = 3;
+  string rejection_code = 4;
+  string message = 5;
+  uint64 handled_at_robot_time_ns = 6;
+  repeated DebugCommandArgumentValue outputs = 7;
+}
+
+enum DebugCommandResult {
+  DEBUG_COMMAND_RESULT_UNSPECIFIED = 0;
+  DEBUG_COMMAND_ACCEPTED = 1;
+  DEBUG_COMMAND_COMPLETED = 2;
+  DEBUG_COMMAND_REJECTED = 3;
+  DEBUG_COMMAND_EXPIRED = 4;
+  DEBUG_COMMAND_DUPLICATE = 5;
+  DEBUG_COMMAND_FAILED = 6;
+}
+
+message DebugToolState {
+  string node_id = 1;
+  string tool_instance_id = 2;
+  DebugSessionState state = 3;
+  bool output_enabled = 4;
+  double requested_output = 5;
+  double applied_output = 6;
+  string output_unit = 7;
+  string status_message = 8;
+}
+
+message DebugSafetyState {
+  bool tcp_connected = 1;
+  bool watchdog_healthy = 2;
+  bool output_allowed = 3;
+  string blocked_reason = 4;
+}

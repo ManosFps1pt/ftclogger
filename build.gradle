@@ -1,0 +1,115 @@
+plugins {
+    id 'com.android.library' version '8.10.0'
+    id 'com.google.protobuf' version '0.9.4'
+    id 'maven-publish'
+}
+
+android {
+    namespace = 'io.github.manosfps1pt.ftclogger'
+    compileSdk = 30
+
+    defaultConfig {
+        minSdk = 24
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+
+    sourceSets {
+        main.proto.srcDir 'protocol'
+    }
+
+    publishing {
+        singleVariant('release') {
+            withSourcesJar()
+        }
+    }
+}
+
+dependencies {
+    // Public methods expose both FTC and protobuf types to callers.
+    // These are Maven dependencies, not SDK classes embedded into our AAR.
+    api 'org.firstinspires.ftc:RobotCore:11.2.1'
+    api 'com.google.protobuf:protobuf-javalite:3.25.5'
+    api 'dev.nextftc.v2:hardware:0.2.1'
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.mockito:mockito-core:5.11.0'
+}
+
+protobuf {
+    protoc {
+        artifact = 'com.google.protobuf:protoc:3.25.5'
+    }
+    generateProtoTasks {
+        all().configureEach { task ->
+            task.builtins {
+                java {
+                    option 'lite'
+                }
+            }
+        }
+    }
+}
+
+publishing {
+    repositories {
+        // Reproducible local repository for verification and release staging.
+        maven {
+            name = 'Build'
+            url = layout.buildDirectory.dir('repository')
+        }
+        // Configure a remote Maven host without committing credentials.
+        if (providers.gradleProperty('publishUrl').isPresent()) {
+            maven {
+                name = 'Remote'
+                url = uri(providers.gradleProperty('publishUrl').get())
+                def user = providers.environmentVariable('MAVEN_USERNAME')
+                def password = providers.environmentVariable('MAVEN_PASSWORD')
+                if (user.isPresent() && password.isPresent()) {
+                    credentials {
+                        username = user.get()
+                        password = password.get()
+                    }
+                }
+            }
+        }
+    }
+}
+
+afterEvaluate {
+    publishing.publications {
+        release(MavenPublication) {
+            from components.release
+            artifactId = 'ftclogger'
+            pom {
+                name = 'FTC Logger'
+                description = 'Control Hub telemetry and laptop discovery client for FTC Advanced.'
+                url = 'https://github.com/ManosFps1pt/ftclogger'
+                licenses {
+                    license {
+                        name = 'MIT License'
+                        url = 'https://opensource.org/licenses/MIT'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'ManosFps1pt'
+                        name = 'Manos'
+                    }
+                }
+                scm {
+                    url = 'https://github.com/ManosFps1pt/ftclogger'
+                    connection = 'scm:git:https://github.com/ManosFps1pt/ftclogger.git'
+                    developerConnection = 'scm:git:ssh://git@github.com/ManosFps1pt/ftclogger.git'
+                }
+            }
+        }
+    }
+}
+
+// Retain the project license when distributing the source artifact.
+tasks.withType(Jar).configureEach {
+    from('LICENSE') { into 'META-INF' }
+}
