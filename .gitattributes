@@ -1,3 +1,6 @@
 * text=auto
 gradlew text eol=lf
 *.bat text eol=crlf
+
+# Portable diffs require LF endings and intentionally contain blank context lines.
+integrations/*.patch text eol=lf -whitespace

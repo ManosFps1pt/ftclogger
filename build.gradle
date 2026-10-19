@@ -32,8 +32,11 @@ dependencies {
     // Public methods expose both FTC and protobuf types to callers.
     // These are Maven dependencies, not SDK classes embedded into our AAR.
     api 'org.firstinspires.ftc:RobotCore:11.2.1'
+    implementation 'org.firstinspires.ftc:Hardware:11.2.1'
     api 'com.google.protobuf:protobuf-javalite:3.25.5'
     api 'dev.nextftc.v2:hardware:0.2.1'
+    // RobotController implements this runtime hook; Java needs it on the compile classpath too.
+    implementation 'dev.frozenmilk.sinister:Sloth:0.3.2'
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.mockito:mockito-core:5.11.0'
 }
