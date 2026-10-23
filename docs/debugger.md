@@ -1,14 +1,15 @@
 # Reusable debugger and kS/kV calculator
 
-Version 0.2.1 adds the robot debugger to the existing `ftclogger` artifact. The library
+Version 0.2.1 added the robot debugger to the existing `ftclogger` artifact. Version
+0.2.1.1 republishes that API with a fresh JitPack version. The library
 contains no annotated OpMode: copy [`examples/Debugger.java`](../examples/Debugger.java)
 into your robot's TeamCode package. It registers the calculator without assuming motor
 configuration names, a particular robot class, or the NextFTC robot module.
 
 ## Install on your main robot
 
-1. Use `io.github.manosfps1pt:ftclogger:0.2.1` from a local/staged Maven repository, or
-   `com.github.ManosFps1pt:ftclogger:v0.2.1` after that tag has been published to JitPack.
+1. Use `io.github.manosfps1pt:ftclogger:0.2.1.1` from a local/staged Maven repository, or
+   `com.github.ManosFps1pt:ftclogger:v0.2.1.1` after that tag has been published to JitPack.
    Follow the repository setup in the main README, including Dairy's runtime repository.
 2. Copy the example OpMode, adjust its package if needed, then build and install your
    Robot Controller application. Do not retain another OpMode with the same display name.

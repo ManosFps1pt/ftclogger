@@ -6,7 +6,7 @@ The library runs inside your OpMode; it does not replace the Robot Controller ap
 
 ## Install from JitPack
 
-The hosted dependency below becomes available after the `v0.2.1` tag has been pushed
+The hosted dependency below becomes available after the `v0.2.1.1` tag has been pushed
 and its JitPack build has succeeded. Merge these repositories into your FTC project's
 existing repository configuration:
 
@@ -29,13 +29,13 @@ Add this dependency to `TeamCode/build.gradle`:
 
 ```groovy
 dependencies {
-    implementation 'com.github.ManosFps1pt:ftclogger:v0.2.1'
+    implementation 'com.github.ManosFps1pt:ftclogger:v0.2.1.1'
 }
 ```
 
 JitPack coordinates use the GitHub owner, repository, and exact release tag.
-Java imports remain under `io.github.manosfps1pt.ftclogger`. Version 0.2.1 adds the
-reusable debugger and kS/kV calculator. It retains the
+Java imports remain under `io.github.manosfps1pt.ftclogger`. Version 0.2.1.1 republishes
+the reusable debugger and kS/kV calculator under a fresh JitPack version. It retains the
 NextFTC v2, SDK motor, and RGB indicator bindings introduced in 0.2.0, including
 the original `DcMotorEx` overloads. See [hardware usage](#motors-and-rgb-indicators).
 
@@ -73,7 +73,7 @@ Then add to `TeamCode/build.gradle`:
 
 ```groovy
 dependencies {
-    implementation 'io.github.manosfps1pt:ftclogger:0.2.1'
+    implementation 'io.github.manosfps1pt:ftclogger:0.2.1.1'
 }
 ```
 
@@ -225,7 +225,7 @@ instead of `ANDROID_HOME`, configure the same SDK path in `smoke-test/local.prop
 Outputs:
 
 - `build/outputs/aar/ftclogger-release.aar`
-- `build/repository/io/github/manosfps1pt/ftclogger/0.2.1/` (AAR, sources, POM, metadata)
+- `build/repository/io/github/manosfps1pt/ftclogger/0.2.1.1/` (AAR, sources, POM, metadata)
 - `build/reports/tests/testReleaseUnitTest/index.html`
 
 The GitHub build workflow runs these checks and uploads the staged Maven repository.
@@ -239,15 +239,15 @@ then hosts those artifacts. Its `GROUP` and `VERSION` environment variables over
 the publication coordinates for that build; local development keeps the group and
 version from `gradle.properties`.
 
-For version 0.2.1:
+For version 0.2.1.1:
 
 1. Run the build and consumer checks above.
 2. Commit and push the release source and configuration to GitHub.
 3. Confirm the GitHub Build workflow succeeds.
-4. Create an annotated tag with `git tag -a v0.2.1 -m "ftclogger 0.2.1"` and push it
-   with `git push origin v0.2.1`.
+4. Create an annotated tag with `git tag -a v0.2.1.1 -m "ftclogger 0.2.1.1"` and push it
+   with `git push origin v0.2.1.1`.
 5. Open [JitPack](https://jitpack.io/#ManosFps1pt/ftclogger), look up the repository,
-   request `v0.2.1`, and confirm its build succeeds before sharing the dependency.
+   request `v0.2.1.1`, and confirm its build succeeds before sharing the dependency.
 6. Update consuming FTC projects to the hosted dependency, sync Gradle, and rebuild
    and install the Robot Controller APK on the Hub.
 
@@ -259,7 +259,7 @@ References: [JitPack Android guide](https://docs.jitpack.io/android/),
 
 ## Publish to another Maven host
 
-The default coordinates are `io.github.manosfps1pt:ftclogger:0.2.1`.
+The default coordinates are `io.github.manosfps1pt:ftclogger:0.2.1.1`.
 Set the next release version in `gradle.properties` before publishing.
 For a Maven host other than JitPack, configure its deployment URL and credentials.
 Provide credentials through `MAVEN_USERNAME` and `MAVEN_PASSWORD`, then run:
